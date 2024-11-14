@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "@prisma/client";
 const postrouter = Router();
 const prisma = new PrismaClient();
 
@@ -9,13 +9,18 @@ postrouter.get("/", async (req, res) => {
 });
 
 postrouter.post("/", async (req, res) => {
-  const { title, content, userId } = req.body;
+  const { title, content, userId, authorId } = req.body;
 
   const newPost = await prisma.post.create({
     data: {
       title,
       content,
-      userId,
+
+      author: {
+        connect: {
+          id: userId,
+        },
+      },
     },
   });
   res.json(newPost);

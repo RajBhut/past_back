@@ -1,14 +1,21 @@
 import express from "express";
-import userrouter from "./routs/user.routes";
-import postrouter from "./routs/post.routes";
-
+import userrouter from "./routs/user.routes.js";
+import postrouter from "./routs/post.routes.js";
+import cors from "cors";
 const app = express();
-pp.use(express.json());
-app.use(userrouter);
-app.use(postrouter);
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use("/user", userrouter);
+app.use("/post", postrouter);
 app.get("/", (req, res) => {
   res.send("hellow world");
 });
+
 app.listen(3000, () => {
   console.log("started");
 });

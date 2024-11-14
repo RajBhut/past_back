@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "@prisma/client";
 const userrouter = Router();
 const prisma = new PrismaClient();
 userrouter.get("/", (req, res) => {
@@ -8,18 +8,19 @@ userrouter.get("/", (req, res) => {
 });
 
 userrouter.post("/", async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, name } = req.body;
 
   const newUser = await prisma.user.create({
     data: {
       username,
       email,
       password,
+      name,
     },
   });
   res.json(newUser);
 });
-userrouter.get("/login", async (req, res) => {
+userrouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const user = await prisma.user.findFirst({
     where: {
