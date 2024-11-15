@@ -4,7 +4,12 @@ const postrouter = Router();
 const prisma = new PrismaClient();
 
 postrouter.get("/", async (req, res) => {
-  const allPosts = await prisma.post.findMany();
+  const allPosts = await prisma.post.findMany({
+    select: {
+      id: true,
+      title: true,
+    },
+  });
   res.json(allPosts);
 });
 
@@ -57,6 +62,12 @@ postrouter.put("/:id", async (req, res) => {
 
 postrouter.delete("/:id", async (req, res) => {
   const { id } = req.params;
+  const { userId } = req.body;
+  if (userId !== id) {
+    res
+      .status(401)
+      .json({ message: "You are not authorized to delete this post" });
+  }
   const post = await prisma.post.delete({
     where: {
       id: Number(id),
