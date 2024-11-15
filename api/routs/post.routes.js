@@ -8,6 +8,7 @@ postrouter.get("/", async (req, res) => {
     select: {
       id: true,
       title: true,
+      authorId: true,
     },
   });
   res.json(allPosts);
