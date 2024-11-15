@@ -7,7 +7,7 @@
     "start": "nodemon api/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "prisma generate",
-    "build": "npx prisma generate && npm run build"
+    "build": "npx prisma generate && npm run vercel-build"
   },
   "keywords": [],
   "author": "",
