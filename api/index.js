@@ -9,6 +9,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use("/user", userrouter);
 app.use("/post", postrouter);
