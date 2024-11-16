@@ -63,18 +63,29 @@ postrouter.put("/:id", async (req, res) => {
 
 postrouter.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.body;
-  if (userId !== id) {
+  const { userId, single_post } = req.body;
+
+  try {
+    if (userId != single_post.authorId) {
+      return res
+        .status(401)
+        .json({ message: "You are not authorized to delete this post" });
+    }
+
+    // Proceed to delete the post
+    const post = await prisma.post.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    return res.json(post);
+  } catch (error) {
+    console.error(error);
     res
-      .status(401)
-      .json({ message: "You are not authorized to delete this post" });
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
-  const post = await prisma.post.delete({
-    where: {
-      id: Number(id),
-    },
-  });
-  res.json(post);
 });
 
 export default postrouter;
