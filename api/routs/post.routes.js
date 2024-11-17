@@ -9,18 +9,20 @@ postrouter.get("/", async (req, res) => {
       id: true,
       title: true,
       authorId: true,
+      burnAfterRead: true,
     },
   });
   res.json(allPosts);
 });
 
 postrouter.post("/", async (req, res) => {
-  const { title, content, userId, authorId } = req.body;
+  const { title, content, userId, authorId, bar } = req.body;
 
   const newPost = await prisma.post.create({
     data: {
       title,
       content,
+      burnAfterRead: bar,
 
       author: {
         connect: {
@@ -40,6 +42,13 @@ postrouter.get("/:id", async (req, res) => {
     },
   });
   if (post) {
+    if (post.burnAfterRead) {
+      await prisma.post.delete({
+        where: {
+          id: post.id,
+        },
+      });
+    }
     res.json(post);
   } else {
     res.status(404).json({ message: "Post not found" });
@@ -72,7 +81,6 @@ postrouter.delete("/:id", async (req, res) => {
         .json({ message: "You are not authorized to delete this post" });
     }
 
-    // Proceed to delete the post
     const post = await prisma.post.delete({
       where: {
         id: Number(id),
