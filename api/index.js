@@ -2,7 +2,17 @@ import express from "express";
 import userrouter from "./routs/user.routes.js";
 import postrouter from "./routs/post.routes.js";
 import cors from "cors";
+import { rateLimit } from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
 const app = express();
+app.use(limiter);
 app.use(
   cors({
     origin: "https://paster.rajb.codes",
