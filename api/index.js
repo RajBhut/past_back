@@ -9,6 +9,7 @@ const limiter = rateLimit({
   limit: 100,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  trustProxy: true,
 });
 
 const app = express();
