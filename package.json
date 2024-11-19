@@ -14,11 +14,11 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@upstash/ratelimit": "^2.0.4",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.0",
-    "express-rate-limit": "^7.4.1",
     "http-proxy-middleware": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.2",
