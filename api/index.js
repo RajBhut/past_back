@@ -34,7 +34,7 @@ const rateLimiterMiddleware = async (req, res, next) => {
 
 app.use(
   cors({
-    origin: "https://paster.rajb.codes",
+    origin: process.env.Frontend_URL,
     credentials: true,
   })
 );
