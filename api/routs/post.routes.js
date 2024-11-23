@@ -10,6 +10,7 @@ postrouter.get("/", async (req, res) => {
       title: true,
       authorId: true,
       burnAfterRead: true,
+      createdAt: true,
     },
   });
   res.json(allPosts);
