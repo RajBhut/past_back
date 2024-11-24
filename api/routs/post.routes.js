@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { auth } from "./user.routes.js";
 import { PrismaClient } from "@prisma/client";
 const postrouter = Router();
 const prisma = new PrismaClient();
@@ -16,7 +17,7 @@ postrouter.get("/", async (req, res) => {
   res.json(allPosts);
 });
 
-postrouter.post("/", async (req, res) => {
+postrouter.post("/", auth, async (req, res) => {
   const { title, content, userId, authorId, bar } = req.body;
 
   const newPost = await prisma.post.create({
@@ -71,7 +72,7 @@ postrouter.put("/:id", async (req, res) => {
   res.json(post);
 });
 
-postrouter.delete("/:id", async (req, res) => {
+postrouter.delete("/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { userId, single_post } = req.body;
 

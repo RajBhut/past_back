@@ -4,6 +4,7 @@ import postrouter from "./routs/post.routes.js";
 import cors from "cors";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import cookieParser from "cookie-parser";
 const app = express();
 
 const redis = new Redis({
@@ -12,8 +13,8 @@ const redis = new Redis({
 });
 const rateLimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(20, "1m"), // 10 requests per minute
-  prefix: "my-rate-limit", // Prefix for the rate limit keys in Redis
+  limiter: Ratelimit.slidingWindow(20, "1m"),
+  prefix: "my-rate-limit",
 });
 
 const rateLimiterMiddleware = async (req, res, next) => {
@@ -40,6 +41,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 app.use("/user", userrouter);
 app.use("/post", postrouter);
 app.get("/", (req, res) => {
