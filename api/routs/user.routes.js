@@ -85,7 +85,7 @@ userrouter.post("/", async (req, res) => {
 });
 userrouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(email);
+
   const user = await prisma.user.findFirst({
     where: {
       email: email,
