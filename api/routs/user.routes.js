@@ -91,6 +91,9 @@ userrouter.post("/login", async (req, res) => {
       email: email,
     },
   });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
   let boo = await compare_passs(password, user.password);
   if (boo && user) {
     const token = genrateToken(user.id);
