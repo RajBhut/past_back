@@ -5,16 +5,38 @@ const postrouter = Router();
 const prisma = new PrismaClient();
 
 postrouter.get("/", async (req, res) => {
-  const allPosts = await prisma.post.findMany({
-    select: {
-      id: true,
-      title: true,
-      authorId: true,
-      burnAfterRead: true,
-      createdAt: true,
-    },
-  });
-  res.json(allPosts);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  try {
+    const totalPosts = await prisma.post.count();
+    const posts = await prisma.post.findMany({
+      select: {
+        id: true,
+        title: true,
+        authorId: true,
+        burnAfterRead: true,
+        createdAt: true,
+      },
+      skip: skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json({
+      posts,
+      currentPage: page,
+      totalPages: Math.ceil(totalPosts / limit),
+      totalPosts,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching posts", error: error.message });
+  }
 });
 
 postrouter.post("/", auth, async (req, res) => {
