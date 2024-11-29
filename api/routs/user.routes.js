@@ -112,4 +112,7 @@ userrouter.post("/login", async (req, res) => {
     res.status(404).json({ message: "User not found" });
   }
 });
+userrouter.get("/profile", auth, async (req, res) => {
+  return req.user;
+});
 export default userrouter;
