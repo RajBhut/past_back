@@ -38,6 +38,8 @@ export const auth = async (req, res, next) => {
     if (!user) {
       return res.status(401).send("Unauthorized: Invalid token");
     } else {
+      res.header("Access-Control-Allow-Origin", `${process.env.Frontend_URL}`);
+      res.header("Access-Control-Allow-Credentials", "true");
       req.user = user;
 
       next();
