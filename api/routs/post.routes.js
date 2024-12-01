@@ -38,7 +38,66 @@ postrouter.get("/", async (req, res) => {
       .json({ message: "Error fetching posts", error: error.message });
   }
 });
+postrouter.post("/upvote", auth, async (req, res) => {
+  const { postId, userId } = req.body;
 
+  try {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const upvote = await prisma.upvote.findFirst({
+      where: { postId, userId },
+    });
+
+    if (upvote) {
+      await prisma.upvote.delete({
+        where: { id: upvote.id },
+      });
+      return res.json({ message: "Upvote removed" });
+    } else {
+      await prisma.upvote.create({
+        data: {
+          Post: { connect: { id: postId } },
+          User: { connect: { id: userId } },
+        },
+      });
+      return res.json({ message: "Upvoted" });
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
+  }
+});
+postrouter.get("/upvotes/data", auth, async (req, res) => {
+  const { postId, userId } = req.body;
+  try {
+    const upvotecount = await prisma.upvote.count({
+      where: { postId },
+    });
+    const userupvote = await prisma.upvote.findFirst({
+      where: { postId, userId },
+    });
+    if (!userupvote) {
+      return res.json({ upvotecount, userupvote: false });
+    } else res.json({ upvotecount, userupvote });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
+  }
+});
 postrouter.post("/", auth, async (req, res) => {
   const { title, content, userId, authorId, bar } = req.body;
 
