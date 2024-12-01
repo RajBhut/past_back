@@ -79,18 +79,23 @@ postrouter.post("/upvote", auth, async (req, res) => {
       .json({ message: "Something went wrong", error: error.message });
   }
 });
-postrouter.get("/upvotes/data", auth, async (req, res) => {
-  const { postId, userId } = req.body;
+postrouter.get("/upvotes/data/:pId", auth, async (req, res) => {
+  const { pId } = req.params;
+  const postId = Number(pId);
+  const userId = req.user.id;
+
   try {
     const upvotecount = await prisma.upvote.count({
       where: { postId },
     });
+
     const userupvote = await prisma.upvote.findFirst({
       where: { postId, userId },
     });
+
     if (!userupvote) {
       return res.json({ upvotecount, userupvote: false });
-    } else res.json({ upvotecount, userupvote });
+    } else res.json({ upvotecount, userupvote: true });
   } catch (error) {
     console.error(error);
     res
