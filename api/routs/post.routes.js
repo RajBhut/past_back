@@ -92,7 +92,8 @@ postrouter.get("/upvotes/data/:pId", auth, async (req, res) => {
     const userupvote = await prisma.upvote.findFirst({
       where: { postId, userId },
     });
-
+    res.header("Access-Control-Allow-Origin", `${process.env.Frontend_URL}`);
+    res.header("Access-Control-Allow-Credentials", "true");
     if (!userupvote) {
       return res.json({ upvotecount, userupvote: false });
     } else res.json({ upvotecount, userupvote: true });
