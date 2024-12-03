@@ -36,8 +36,10 @@ model Post {
   burnAfterRead Boolean  @default(false)
   author        User     @relation(fields: [authorId], references: [id])
   authorId      Int
-
-  Upvote Upvote[]
+  linkId        String   @default("")
+  accessId      String   @default("")
+  accesstocken  String   @default("")
+  Upvote        Upvote[]
 }
 
 model Upvote {
