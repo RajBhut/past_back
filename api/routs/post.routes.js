@@ -131,35 +131,22 @@ postrouter.post("/", auth, async (req, res) => {
     data: {
       title: newPost.title,
       url: `${process.env.Frontend_URL}/page/${newPost.id}`,
+      createAccessToken: true,
     },
   };
   let linkid = "";
+  let accesstockenid = "";
+  let accesstocken = "";
   try {
     const { data } = await axios.request(options);
 
     linkid = data.data.id;
+    accesstocken = data.data.accessToken.token;
+    accesstockenid = data.data.accessToken.id;
   } catch (error) {
     console.error(error);
   }
-  const options1 = {
-    method: "POST",
-    url: `https://api.link.nxog.tech/v1/link/${linkid}/access-token`,
-    headers: {
-      Authorization: `Bearer ${process.env.LINKER_API}`,
-      "Content-Type": "application/json",
-    },
-    data: { label: `${newPost.id}`, role: "VIEWER" },
-  };
-  let accesstocken = "";
-  let accesstockenid = "";
-  try {
-    const { data } = await axios.request(options1);
 
-    accesstocken = data.data.token;
-    accesstockenid = data.data.tokenId;
-  } catch (error) {
-    console.error(error);
-  }
   const updatedpost = await prisma.post.update({
     where: {
       id: newPost.id,
