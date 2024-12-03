@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { auth } from "./user.routes.js";
 import { PrismaClient } from "@prisma/client";
+import axios from "axios";
 const postrouter = Router();
 const prisma = new PrismaClient();
 
@@ -120,7 +121,56 @@ postrouter.post("/", auth, async (req, res) => {
       },
     },
   });
-  res.json(newPost);
+  const options = {
+    method: "POST",
+    url: "https://api.link.nxog.tech/v1/link",
+    headers: {
+      Authorization: `Bearer ${process.env.LINKER_API}`,
+      "Content-Type": "application/json",
+    },
+    data: {
+      title: newPost.title,
+      url: `${process.env.Frontend_URL}/page/${newPost.id}`,
+    },
+  };
+  let linkid = "";
+  try {
+    const { data } = await axios.request(options);
+    console.log(data);
+    linkid = data.id;
+  } catch (error) {
+    console.error(error);
+  }
+  const options1 = {
+    method: "POST",
+    url: "https://api.link.nxog.tech/v1/link/__ID__/access-token",
+    headers: {
+      Authorization: `Bearer ${process.env.LINKER_API}`,
+      "Content-Type": "application/json",
+    },
+    data: { label: `${newPost.id}`, role: "VIEWER" },
+  };
+  let accesstocken = "";
+  let accesstockenid = "";
+  try {
+    const { data } = await axios.request(options1);
+    console.log(data);
+    accesstocken = data.token;
+    accesstockenid = data.tokenId;
+  } catch (error) {
+    console.error(error);
+  }
+  const updatedpost = await prisma.post.update({
+    where: {
+      id: newPost.id,
+    },
+    data: {
+      linkId: linkid,
+      accessId: accesstockenid,
+      accesstocken: accesstocken,
+    },
+  });
+  res.json(updatedpost);
 });
 
 postrouter.get("/:id", async (req, res) => {
