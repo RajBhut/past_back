@@ -136,8 +136,8 @@ postrouter.post("/", auth, async (req, res) => {
   let linkid = "";
   try {
     const { data } = await axios.request(options);
-    console.log(data);
-    linkid = data.id;
+
+    linkid = data.data.id;
   } catch (error) {
     console.error(error);
   }
@@ -154,9 +154,9 @@ postrouter.post("/", auth, async (req, res) => {
   let accesstockenid = "";
   try {
     const { data } = await axios.request(options1);
-    console.log(data);
-    accesstocken = data.token;
-    accesstockenid = data.tokenId;
+
+    accesstocken = data.data.token;
+    accesstockenid = data.data.tokenId;
   } catch (error) {
     console.error(error);
   }
