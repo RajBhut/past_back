@@ -143,7 +143,7 @@ postrouter.post("/", auth, async (req, res) => {
   }
   const options1 = {
     method: "POST",
-    url: "https://api.link.nxog.tech/v1/link/__ID__/access-token",
+    url: `https://api.link.nxog.tech/v1/link/${linkid}/access-token`,
     headers: {
       Authorization: `Bearer ${process.env.LINKER_API}`,
       "Content-Type": "application/json",
