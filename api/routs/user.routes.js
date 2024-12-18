@@ -76,7 +76,6 @@ userrouter.post("/", async (req, res) => {
       sameSite: "none",
       secure: true,
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 * 5,
     });
 
     res.json(newUser);
@@ -85,6 +84,7 @@ userrouter.post("/", async (req, res) => {
     return res.status(400).send("Error in creating user");
   }
 });
+
 userrouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -114,7 +114,21 @@ userrouter.post("/login", async (req, res) => {
     res.status(404).json({ message: "User not found" });
   }
 });
+userrouter.post("/logout", (req, res) => {
+  res.clearCookie("jwt", {
+    sameSite: "none",
+    secure: true,
+    httpOnly: true,
+  });
+  res.json({ message: "User logged out successfully" });
+});
 userrouter.get("/profile", auth, async (req, res) => {
-  return req.user;
+  const user = req.user;
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json(user);
 });
 export default userrouter;
