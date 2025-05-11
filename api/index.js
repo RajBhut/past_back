@@ -17,7 +17,7 @@ const rateLimit = new Ratelimit({
   prefix: "my-rate-limit",
 });
 
-const rateLimiterMiddleware = async (req, res, next) => {
+const rateLimiterMiddleware = asy`nc (req, res, next) => {
   const identifier = req.ip;
   const { success, remaining, reset } = await rateLimit.limit(identifier);
 
