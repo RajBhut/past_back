@@ -19,7 +19,9 @@ model User {
   updatedAt DateTime @updatedAt
   name      String
   email     String   @unique
+  username  String?  @unique
   password  String
+  avatar    String?  @default("")
 
   Post Post[]
 
@@ -32,8 +34,12 @@ model Post {
   updatedAt     DateTime @updatedAt
   title         String   @db.VarChar(255)
   content       String?
+  description   String?  @default("")
+  language      String   @default("javascript")
+  tags          String[] @default([])
   published     Boolean  @default(false)
   burnAfterRead Boolean  @default(false)
+  views         Int      @default(0)
   author        User     @relation(fields: [authorId], references: [id])
   authorId      Int
   linkId        String   @default("")

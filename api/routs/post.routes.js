@@ -16,9 +16,21 @@ postrouter.get("/", async (req, res) => {
       select: {
         id: true,
         title: true,
+        description: true,
+        language: true,
+        tags: true,
         authorId: true,
         burnAfterRead: true,
+        views: true,
         createdAt: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
+        },
       },
       skip: skip,
       take: limit,
@@ -106,96 +118,173 @@ postrouter.get("/upvotes/data/:pId", auth, async (req, res) => {
   }
 });
 postrouter.post("/", auth, async (req, res) => {
-  const { title, content, userId, authorId, bar } = req.body;
+  const { title, content, description, language, tags, userId, authorId, bar } =
+    req.body;
 
-  const newPost = await prisma.post.create({
-    data: {
-      title,
-      content,
-      burnAfterRead: bar,
+  try {
+    const newPost = await prisma.post.create({
+      data: {
+        title,
+        content,
+        description: description || "",
+        language: language || "javascript",
+        tags: tags || [],
+        burnAfterRead: bar || false,
 
-      author: {
-        connect: {
-          id: userId,
+        author: {
+          connect: {
+            id: userId,
+          },
         },
       },
-    },
-  });
-  const options = {
-    method: "POST",
-    url: "https://api.link.nxog.tech/v1/link",
-    headers: {
-      Authorization: `Bearer ${process.env.LINKER_API}`,
-      "Content-Type": "application/json",
-    },
-    data: {
-      title: newPost.title,
-      url: `${process.env.Frontend_URL}/page/${newPost.id}`,
-      createAccessToken: true,
-    },
-  };
-  let linkid = "";
-  let accesstockenid = "";
-  let accesstocken = "";
-  try {
-    const { data } = await axios.request(options);
+    });
+    const options = {
+      method: "POST",
+      url: "https://api.link.nxog.tech/v1/link",
+      headers: {
+        Authorization: `Bearer ${process.env.LINKER_API}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        title: newPost.title,
+        url: `${process.env.Frontend_URL}/page/${newPost.id}`,
+        createAccessToken: true,
+      },
+    };
+    let linkid = "";
+    let accesstockenid = "";
+    let accesstocken = "";
+    try {
+      const { data } = await axios.request(options);
 
-    linkid = data.data.id;
-    accesstocken = data.data.accessToken.token;
-    accesstockenid = data.data.accessToken.id;
+      linkid = data.data.id;
+      accesstocken = data.data.accessToken.token;
+      accesstockenid = data.data.accessToken.id;
+    } catch (error) {
+      console.error(error);
+    }
+
+    const updatedpost = await prisma.post.update({
+      where: {
+        id: newPost.id,
+      },
+      data: {
+        linkId: linkid,
+        accessId: accesstockenid,
+        accesstocken: accesstocken,
+      },
+    });
+    res.json(updatedpost);
   } catch (error) {
-    console.error(error);
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: "Error creating post", error: error.message });
   }
-
-  const updatedpost = await prisma.post.update({
-    where: {
-      id: newPost.id,
-    },
-    data: {
-      linkId: linkid,
-      accessId: accesstockenid,
-      accesstocken: accesstocken,
-    },
-  });
-  res.json(updatedpost);
 });
 
 postrouter.get("/:id", async (req, res) => {
   const { id } = req.params;
-  const post = await prisma.post.findUnique({
-    where: {
-      id: Number(id),
-    },
-  });
-  if (post) {
-    if (post.burnAfterRead) {
-      await prisma.post.delete({
-        where: {
-          id: post.id,
+
+  try {
+    const post = await prisma.post.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
         },
+      },
+    });
+
+    if (post) {
+      // Increment view count
+      await prisma.post.update({
+        where: { id: Number(id) },
+        data: { views: { increment: 1 } },
       });
+
+      if (post.burnAfterRead) {
+        await prisma.post.delete({
+          where: {
+            id: post.id,
+          },
+        });
+        // Remove author info for burned posts for security
+        const { author, ...postWithoutAuthor } = post;
+        res.json(postWithoutAuthor);
+      } else {
+        res.json(post);
+      }
+    } else {
+      res.status(404).json({ message: "Post not found" });
     }
-    res.json(post);
-  } else {
-    res.status(404).json({ message: "Post not found" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error fetching post", error: error.message });
   }
 });
 
-postrouter.put("/:id", async (req, res) => {
+postrouter.put("/:id", auth, async (req, res) => {
   const { id } = req.params;
-  const { title, content } = req.body;
-  const post = await prisma.post.update({
-    where: {
-      id: Number(id),
-    },
-    data: {
-      title,
-      content,
-    },
-  });
-  res.json(post);
-});
+  const { title, content, description, language, tags } = req.body;
+  const userId = req.user.id;
 
+  try {
+    // First check if the post exists and if the user is authorized to edit it
+    const existingPost = await prisma.post.findUnique({
+      where: { id: Number(id) },
+      select: { authorId: true },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (existingPost.authorId !== userId) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to edit this post" });
+    }
+
+    const post = await prisma.post.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        title: title || undefined,
+        content: content || undefined,
+        description: description || undefined,
+        language: language || undefined,
+        tags: tags || undefined,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+    res.json(post);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error updating post", error: error.message });
+  }
+});
 postrouter.delete("/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { userId, single_post } = req.body;
@@ -219,6 +308,31 @@ postrouter.delete("/:id", auth, async (req, res) => {
     res
       .status(500)
       .json({ message: "Something went wrong", error: error.message });
+  }
+});
+
+postrouter.get("/upvotes/data/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const upvotecount = await prisma.upvote.count({
+      where: { postId: Number(id) },
+    });
+
+    const userupvote = await prisma.upvote.findFirst({
+      where: { postId: Number(id), userId: Number(userId) },
+    });
+
+    res.json({
+      upvotecount,
+      userupvote: !!userupvote,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error fetching upvote data", error: error.message });
   }
 });
 

@@ -30,7 +30,9 @@ export const auth = async (req, res, next) => {
         createdAt: true,
         updatedAt: true,
         name: true,
+        username: true,
         email: true,
+        avatar: true,
         password: false,
       },
     });
@@ -59,12 +61,19 @@ userrouter.post("/", async (req, res) => {
   let { username, email, password, name } = req.body;
   try {
     password = bcrypt.hashSync(password, 10);
+
+    // Generate username if not provided
+    if (!username) {
+      username = `user_${Date.now()}`;
+    }
+
     const newUser = await prisma.user.create({
       data: {
         username,
         email,
         password,
         name,
+        avatar: "", // Default empty avatar
       },
     });
 
