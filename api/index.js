@@ -13,7 +13,7 @@ const redis = new Redis({
 });
 const rateLimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(100, "1m"),
+  limiter: Ratelimit.slidingWindow(500, "1m"),
   prefix: "my-rate-limit",
 });
 

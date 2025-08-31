@@ -92,6 +92,46 @@ postrouter.post("/upvote", auth, async (req, res) => {
       .json({ message: "Something went wrong", error: error.message });
   }
 });
+
+postrouter.get("/search", async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ message: "Search query is required" });
+  try {
+    const posts = await prisma.post.findMany({
+      where: {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { content: { contains: q, mode: "insensitive" } },
+          {
+            description: {
+              contains: q,
+              mode: "insensitive",
+            },
+          },
+          { tags: { hasSome: [q] || [] } },
+        ],
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error searching posts", error: error.message });
+  }
+});
+
 postrouter.get("/upvotes/data/:pId", auth, async (req, res) => {
   const { pId } = req.params;
   const postId = Number(pId);
@@ -204,7 +244,6 @@ postrouter.get("/:id", async (req, res) => {
     });
 
     if (post) {
-      // Increment view count
       await prisma.post.update({
         where: { id: Number(id) },
         data: { views: { increment: 1 } },
@@ -239,7 +278,6 @@ postrouter.put("/:id", auth, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // First check if the post exists and if the user is authorized to edit it
     const existingPost = await prisma.post.findUnique({
       where: { id: Number(id) },
       select: { authorId: true },
@@ -285,6 +323,7 @@ postrouter.put("/:id", auth, async (req, res) => {
       .json({ message: "Error updating post", error: error.message });
   }
 });
+
 postrouter.delete("/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { userId, single_post } = req.body;
